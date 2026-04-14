@@ -1,1 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Workforce App Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+    <h1>Workforce App (Demo)</h1>
+
+    <!-- NAVIGATION -->
+    <div class="nav">
+        <button onclick="showSection('leave')">Leave Request</button>
+        <button onclick="showSection('handover')">Handover</button>
+        <button onclick="showSection('dashboard')">Dashboard</button>
+    </div>
+
+    <!-- LEAVE REQUEST -->
+    <div id="leave" class="section">
+        <h2>Request Leave</h2>
+
+        <input type="text" id="name" placeholder="Your Name"><br><br>
+        <input type="date" id="startDate"><br><br>
+        <input type="date" id="endDate"><br><br>
+
+        <button onclick="submitLeave()">Check Availability</button>
+
+        <p id="leaveResult"></p>
+    </div>
+
+    <!-- HANDOVER -->
+    <div id="handover" class="section hidden">
+        <h2>Handover Tasks</h2>
+
+        <input type="text" id="task" placeholder="Task"><br><br>
+        <input type="text" id="owner" placeholder="Assign To"><br><br>
+
+        <select id="priority">
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+        </select><br><br>
+
+        <button onclick="addTask()">Add Task</button>
+
+        <ul id="taskList"></ul>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="section hidden">
+        <h2>Leadership Dashboard</h2>
+
+        <button onclick="generateSummary()">Generate Daily Summary</button>
+
+        <pre id="summary"></pre>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
