@@ -96,6 +96,8 @@ body {
 .nav-btn:hover {
   background: rgba(255,255,255,0.06);
   border-color: rgba(255,255,255,0.08);
+  transform: none;
+  box-shadow: none;
 }
 
 .nav-btn.active {
@@ -143,6 +145,7 @@ body {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 24px;
+  gap: 16px;
 }
 
 .eyebrow {
@@ -174,7 +177,7 @@ body {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .hero-card {
@@ -238,6 +241,7 @@ body {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .panel-tag {
@@ -276,8 +280,8 @@ select:focus {
   background: white;
 }
 
-.primary-btn,
-button {
+button,
+.primary-btn {
   border: none;
   border-radius: 14px;
   padding: 14px 18px;
@@ -289,8 +293,8 @@ button {
   transition: 0.2s ease;
 }
 
-.primary-btn:hover,
-button:hover {
+button:hover,
+.primary-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(111, 44, 255, 0.24);
 }
@@ -314,6 +318,24 @@ button:hover {
 
 .result-card.neutral {
   color: #374151;
+}
+
+.result-card.success {
+  background: #ecfdf3;
+  border-color: #b7ebc6;
+  color: #166534;
+}
+
+.result-card.warning {
+  background: #fff8e8;
+  border-color: #f4d58d;
+  color: #92400e;
+}
+
+.result-card.danger {
+  background: #fef1f2;
+  border-color: #f5b7bd;
+  color: #991b1b;
 }
 
 .info-stack {
@@ -360,8 +382,61 @@ button:hover {
   line-height: 1.6;
 }
 
+.task-list li strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.task-meta {
+  color: var(--ovo-muted);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.task-status-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge.low {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.badge.medium {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.badge.high {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.badge.done {
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.badge.outstanding {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
 .task-list li button {
-  margin-top: 10px;
+  margin-top: 6px;
   width: auto;
   padding: 10px 14px;
   border-radius: 12px;
@@ -407,6 +482,7 @@ button:hover {
   line-height: 1.65;
   margin: 0;
   overflow-x: auto;
+  font-size: 14px;
 }
 
 @media (max-width: 980px) {
@@ -427,5 +503,9 @@ button:hover {
   .topbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .main-content {
+    padding: 18px;
   }
 }
