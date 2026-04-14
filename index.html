@@ -1,153 +1,67 @@
-// ---------- SECTION SWITCH ----------
-function showSection(section) {
-    document.getElementById("leave").classList.add("hidden");
-    document.getElementById("handover").classList.add("hidden");
-    document.getElementById("dashboard").classList.add("hidden");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workforce Intelligence Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Workforce Intelligence Dashboard</h1>
 
-    document.getElementById(section).classList.remove("hidden");
-}
+  <div class="nav">
+    <button onclick="showSection('leave')">Leave Request</button>
+    <button onclick="showSection('handover')">Handover</button>
+    <button onclick="showSection('dashboard')">Dashboard</button>
+  </div>
 
-// ---------- STORAGE ----------
-function getData(key) {
-    return JSON.parse(localStorage.getItem(key)) || [];
-}
+  <div id="leave" class="section">
+    <h2>Request Leave</h2>
+    <p>Request time off and see availability instantly.</p>
 
-function setData(key, data) {
-    localStorage.setItem(key, JSON.stringify(data));
-}
+    <label for="name">Name</label>
+    <input type="text" id="name" placeholder="Enter your name" />
 
-// ---------- LEAVE ----------
-function submitLeave() {
-    const name = document.getElementById("name").value;
-    const start = document.getElementById("startDate").value;
-    const end = document.getElementById("endDate").value;
+    <label for="startDate">Start Date</label>
+    <input type="date" id="startDate" />
 
-    if (!name || !start || !end) {
-        document.getElementById("leaveResult").innerText = "Please fill in all fields.";
-        return;
-    }
+    <label for="endDate">End Date</label>
+    <input type="date" id="endDate" />
 
-    let absences = getData("absences");
+    <button onclick="submitLeave()">Check Availability</button>
 
-    absences.push({ name, start, end });
-    setData("absences", absences);
+    <p id="leaveResult"></p>
+  </div>
 
-    // Calculate how many off same period
-    let count = absences.length;
+  <div id="handover" class="section hidden">
+    <h2>Handover Tasks</h2>
 
-    let message = "";
-    if (count >= 5) {
-        message = "⚠️ Low likelihood — too many people already off.";
-    } else if (count >= 3) {
-        message = "⚠️ Medium likelihood — limited capacity.";
-    } else {
-        message = "✅ High likelihood — good coverage.";
-    }
+    <label for="task">Task</label>
+    <input type="text" id="task" placeholder="Enter task" />
 
-    document.getElementById("leaveResult").innerText = message;
-}
+    <label for="owner">Assign To</label>
+    <input type="text" id="owner" placeholder="Enter owner name" />
 
-// ---------- TASKS ----------
-function addTask() {
-    const text = document.getElementById("task").value;
-    const owner = document.getElementById("owner").value;
-    const priority = document.getElementById("priority").value;
+    <label for="priority">Priority</label>
+    <select id="priority">
+      <option>Low</option>
+      <option>Medium</option>
+      <option>High</option>
+    </select>
 
-    if (!text || !owner) {
-        alert("Fill in all fields");
-        return;
-    }
+    <button onclick="addTask()">Add Task</button>
 
-    let tasks = getData("tasks");
+    <ul id="taskList"></ul>
+  </div>
 
-    tasks.push({
-        text,
-        owner,
-        priority,
-        done: false,
-        date: new Date().toISOString()
-    });
+  <div id="dashboard" class="section hidden">
+    <h2>Leadership Dashboard</h2>
 
-    setData("tasks", tasks);
-    renderTasks();
-}
+    <button onclick="generateSummary()">Generate Daily Summary</button>
 
-function toggleTask(index) {
-    let tasks = getData("tasks");
-    tasks[index].done = !tasks[index].done;
-    setData("tasks", tasks);
-    renderTasks();
-}
+    <pre id="summary"></pre>
+  </div>
 
-function renderTasks() {
-    const list = document.getElementById("taskList");
-    list.innerHTML = "";
-
-    let tasks = getData("tasks");
-
-    tasks.forEach((task, i) => {
-        const li = document.createElement("li");
-
-        li.innerHTML = `
-            <strong>${task.text}</strong><br>
-            Owner: ${task.owner}<br>
-            Priority: ${task.priority}<br>
-            Status: ${task.done ? "✅ Done" : "❌ Outstanding"}<br>
-            <button onclick="toggleTask(${i})">Toggle</button>
-        `;
-
-        list.appendChild(li);
-    });
-}
-
-// ---------- DASHBOARD ----------
-function generateSummary() {
-    let absences = getData("absences");
-    let tasks = getData("tasks");
-
-    let summary = "=== DAILY SUMMARY ===\n\n";
-
-    summary += "Absences:\n";
-    if (absences.length === 0) {
-        summary += "- None\n";
-    } else {
-        absences.forEach(a => {
-            summary += `• ${a.name} (${a.start} → ${a.end})\n`;
-        });
-    }
-
-    const completed = tasks.filter(t => t.done);
-    const outstanding = tasks.filter(t => !t.done);
-
-    summary += "\nCompleted Tasks:\n";
-    if (completed.length === 0) {
-        summary += "- None\n";
-    } else {
-        completed.forEach(t => {
-            summary += `✔ ${t.text} (${t.owner})\n`;
-        });
-    }
-
-    summary += "\nOutstanding Tasks:\n";
-    if (outstanding.length === 0) {
-        summary += "- None\n";
-    } else {
-        outstanding.forEach(t => {
-            summary += `❌ ${t.text} (${t.owner})\n`;
-        });
-    }
-
-    // RISK LOGIC
-    if (outstanding.length >= 3) {
-        summary += "\n⚠️ RISK: Multiple outstanding tasks";
-    }
-
-    if (absences.length >= 5) {
-        summary += "\n⚠️ RISK: High absence level";
-    }
-
-    document.getElementById("summary").innerText = summary;
-}
-
-// ---------- LOAD ----------
-renderTasks();
+  <script src="script.js"></script>
+</body>
+</html>
