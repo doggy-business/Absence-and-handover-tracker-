@@ -1,88 +1,97 @@
 const STORAGE_KEYS = {
   absences: "zclops_absences",
-  tasks: "zclops_tasks"
+  handovers: "zclops_handovers"
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  bindNavigation();
-  bindActions();
+  bindTabs();
+  bindForms();
+  bindButtons();
   renderAll();
 });
 
-function bindNavigation() {
-  const navButtons = document.querySelectorAll(".nav-btn");
+function bindTabs() {
+  const tabs = document.querySelectorAll(".tab");
+  const pages = document.querySelectorAll(".page");
 
-  navButtons.forEach(button => {
-    button.addEventListener("click", () => {
-      navButtons.forEach(btn => btn.classList.remove("active"));
-      button.classList.add("active");
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(t => t.classList.remove("active"));
+      pages.forEach(p => p.classList.remove("active"));
 
-      const target = button.dataset.target;
-      showSection(target);
-      document.getElementById("pageTitle").innerText = button.innerText.trim();
+      tab.classList.add("active");
+      document.getElementById(tab.dataset.page).classList.add("active");
     });
   });
 }
 
-function bindActions() {
-  document.getElementById("submitLeaveBtn").addEventListener("click", submitLeave);
-  document.getElementById("addTaskBtn").addEventListener("click", addTask);
-  document.getElementById("generateSummaryBtn").addEventListener("click", generateSummary);
-  document.getElementById("refreshDashboardBtn").addEventListener("click", refreshDashboard);
-  document.getElementById("seedDataBtn").addEventListener("click", seedDemoData);
-  document.getElementById("clearDataBtn").addEventListener("click", clearAllData);
-}
-
-function showSection(sectionId) {
-  document.querySelectorAll(".content-section").forEach(section => {
-    section.classList.add("hidden");
+function bindForms() {
+  document.getElementById("absenceForm").addEventListener("submit", event => {
+    event.preventDefault();
+    submitAbsence();
   });
 
-  const targetSection = document.getElementById(sectionId);
-  if (targetSection) {
-    targetSection.classList.remove("hidden");
-  }
+  document.getElementById("handoverForm").addEventListener("submit", event => {
+    event.preventDefault();
+    submitHandover();
+  });
+
+  document.getElementById("assigneeFilter").addEventListener("input", renderAssignedTasks);
+}
+
+function bindButtons() {
+  document.getElementById("generateSummaryBtn").addEventListener("click", generateSummary);
+  document.getElementById("refreshDashboardBtn").addEventListener("click", refreshDashboard);
+  document.getElementById("loadDemoBtn").addEventListener("click", loadDemoData);
+  document.getElementById("clearDataBtn").addEventListener("click", clearData);
+  document.getElementById("clearAssigneeFilter").addEventListener("click", () => {
+    document.getElementById("assigneeFilter").value = "";
+    renderAssignedTasks();
+  });
 }
 
 function getData(key) {
   return JSON.parse(localStorage.getItem(key)) || [];
 }
 
-function setData(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
+function setData(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
-function submitLeave() {
-  const name = document.getElementById("name").value.trim();
-  const start = document.getElementById("startDate").value;
-  const end = document.getElementById("endDate").value;
-  const resultBox = document.getElementById("leaveResult");
+function createId() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function submitAbsence() {
+  const name = document.getElementById("absenceName").value.trim();
+  const start = document.getElementById("absenceStart").value;
+  const end = document.getElementById("absenceEnd").value;
 
   if (!name || !start || !end) {
-    setLeaveResult("Please fill in all fields.", "danger");
+    setAbsenceOutcome("Please fill in all absence fields.", "danger");
     return;
   }
 
   if (end < start) {
-    setLeaveResult("End date cannot be before start date.", "danger");
+    setAbsenceOutcome("End date cannot be before start date.", "danger");
     return;
   }
 
   const absences = getData(STORAGE_KEYS.absences);
-  const overlappingCount = absences.filter(a => datesOverlap(start, end, a.start, a.end)).length;
+  const overlapping = absences.filter(item => datesOverlap(start, end, item.start, item.end)).length;
 
-  let impact = "High likelihood";
-  let resultType = "success";
-  let message = "✅ High likelihood — good coverage across the selected period.";
+  let likelihood = "High chance";
+  let outcomeType = "success";
+  let outcomeText = "✅ High chance — good coverage across the selected period.";
 
-  if (overlappingCount >= 4) {
-    impact = "Low likelihood";
-    resultType = "danger";
-    message = "⚠️ Low likelihood — too many people already off for this period.";
-  } else if (overlappingCount >= 2) {
-    impact = "Medium likelihood";
-    resultType = "warning";
-    message = "⚠️ Medium likelihood — limited capacity, may depend on coverage.";
+  if (overlapping >= 4) {
+    likelihood = "Low chance";
+    outcomeType = "danger";
+    outcomeText = "⚠️ Low chance — too many people are already off in this period. Consider another date.";
+  } else if (overlapping >= 2) {
+    likelihood = "Medium chance";
+    outcomeType = "warning";
+    outcomeText = "⚠️ Medium chance — several people are already off. Approval may depend on coverage.";
   }
 
   absences.push({
@@ -90,98 +99,92 @@ function submitLeave() {
     name,
     start,
     end,
-    impact
+    likelihood,
+    status: "Pending"
   });
 
   setData(STORAGE_KEYS.absences, absences);
-  setLeaveResult(message, resultType);
+  setAbsenceOutcome(outcomeText, outcomeType);
 
-  document.getElementById("name").value = "";
-  document.getElementById("startDate").value = "";
-  document.getElementById("endDate").value = "";
-
+  document.getElementById("absenceForm").reset();
   renderAll();
 }
 
-function setLeaveResult(message, type) {
-  const resultBox = document.getElementById("leaveResult");
-  resultBox.innerText = message;
-  resultBox.className = `result-card ${type}`;
+function setAbsenceOutcome(message, type) {
+  const box = document.getElementById("absenceOutcome");
+  box.className = `outcome ${type}`;
+  box.textContent = message;
 }
 
-function addTask() {
-  const absentPerson = document.getElementById("handoverOwner").value.trim();
-  const text = document.getElementById("task").value.trim();
-  const owner = document.getElementById("owner").value.trim();
-  const priority = document.getElementById("priority").value;
+function submitHandover() {
+  const absentPerson = document.getElementById("absentPerson").value.trim();
+  const task = document.getElementById("handoverTask").value.trim();
+  const assignedTo = document.getElementById("assignedTo").value.trim();
+  const priority = document.getElementById("handoverPriority").value;
+  const dueDate = document.getElementById("handoverDue").value;
 
-  if (!absentPerson || !text || !owner) {
-    alert("Please fill in absent person, task, and assigned owner.");
+  if (!absentPerson || !task || !assignedTo || !dueDate) {
+    alert("Please complete all handover fields.");
     return;
   }
 
-  const tasks = getData(STORAGE_KEYS.tasks);
+  const handovers = getData(STORAGE_KEYS.handovers);
 
-  tasks.push({
+  handovers.push({
     id: createId(),
     absentPerson,
-    text,
-    owner,
+    task,
+    assignedTo,
     priority,
-    done: false,
-    createdAt: new Date().toISOString()
+    dueDate,
+    done: false
   });
 
-  setData(STORAGE_KEYS.tasks, tasks);
-
-  document.getElementById("handoverOwner").value = "";
-  document.getElementById("task").value = "";
-  document.getElementById("owner").value = "";
-  document.getElementById("priority").value = "Low";
-
+  setData(STORAGE_KEYS.handovers, handovers);
+  document.getElementById("handoverForm").reset();
   renderAll();
 }
 
-function toggleTask(id) {
-  const tasks = getData(STORAGE_KEYS.tasks).map(task => {
-    if (task.id === id) {
-      return { ...task, done: !task.done };
+function toggleHandover(id) {
+  const handovers = getData(STORAGE_KEYS.handovers).map(item => {
+    if (item.id === id) {
+      return { ...item, done: !item.done };
     }
-    return task;
+    return item;
   });
 
-  setData(STORAGE_KEYS.tasks, tasks);
+  setData(STORAGE_KEYS.handovers, handovers);
   renderAll();
 }
 
-function deleteTask(id) {
-  const tasks = getData(STORAGE_KEYS.tasks).filter(task => task.id !== id);
-  setData(STORAGE_KEYS.tasks, tasks);
+function deleteHandover(id) {
+  const handovers = getData(STORAGE_KEYS.handovers).filter(item => item.id !== id);
+  setData(STORAGE_KEYS.handovers, handovers);
   renderAll();
 }
 
-function deleteLeave(id) {
+function deleteAbsence(id) {
   const absences = getData(STORAGE_KEYS.absences).filter(item => item.id !== id);
   setData(STORAGE_KEYS.absences, absences);
   renderAll();
 }
 
 function renderAll() {
-  renderLeaveTable();
-  renderTasks();
-  renderMiniTaskStats();
+  renderAbsences();
+  renderHandovers();
+  renderAssignedTasks();
   refreshDashboard();
 }
 
-function renderLeaveTable() {
+function renderAbsences() {
   const absences = getData(STORAGE_KEYS.absences);
-  const tbody = document.getElementById("leaveTableBody");
-  const table = document.getElementById("leaveTable");
-  const empty = document.getElementById("leaveEmptyState");
-  const tag = document.getElementById("leaveCountTag");
+  const table = document.getElementById("absenceTable");
+  const tbody = document.getElementById("absenceTableBody");
+  const empty = document.getElementById("absenceEmpty");
+  const count = document.getElementById("absenceCount");
 
+  count.textContent = `${absences.length} request${absences.length === 1 ? "" : "s"}`;
   tbody.innerHTML = "";
-  tag.innerText = `${absences.length} request${absences.length === 1 ? "" : "s"}`;
 
   if (absences.length === 0) {
     table.classList.add("hidden");
@@ -198,223 +201,340 @@ function renderLeaveTable() {
       <td>${escapeHtml(item.name)}</td>
       <td>${formatDate(item.start)}</td>
       <td>${formatDate(item.end)}</td>
-      <td>${escapeHtml(item.impact)}</td>
-      <td>
-        <button class="table-action-btn" onclick="deleteLeave('${item.id}')">Delete</button>
-      </td>
+      <td>${escapeHtml(item.likelihood)}</td>
+      <td>${escapeHtml(item.status)}</td>
+      <td><button class="table-action-btn" onclick="deleteAbsence('${item.id}')">Delete</button></td>
     `;
     tbody.appendChild(row);
   });
 }
 
-function renderTasks() {
-  const tasks = getData(STORAGE_KEYS.tasks);
-  const list = document.getElementById("taskList");
-  const empty = document.getElementById("taskEmptyState");
-  const tag = document.getElementById("taskCountTag");
+function renderHandovers() {
+  const handovers = getData(STORAGE_KEYS.handovers);
+  const list = document.getElementById("handoverList");
+  const empty = document.getElementById("handoverEmpty");
+  const count = document.getElementById("handoverCount");
 
+  count.textContent = `${handovers.length} task${handovers.length === 1 ? "" : "s"}`;
   list.innerHTML = "";
-  tag.innerText = `${tasks.length} task${tasks.length === 1 ? "" : "s"}`;
 
-  if (tasks.length === 0) {
+  if (handovers.length === 0) {
     empty.classList.remove("hidden");
     return;
   }
 
   empty.classList.add("hidden");
 
-  tasks.forEach(task => {
-    const li = document.createElement("li");
-
-    const priorityClass = task.priority.toLowerCase();
-    const statusClass = task.done ? "done" : "outstanding";
-    const statusText = task.done ? "Done" : "Outstanding";
-
-    li.innerHTML = `
-      <strong>${escapeHtml(task.text)}</strong>
-      <div class="task-meta">Absent: ${escapeHtml(task.absentPerson)} · Assigned to: ${escapeHtml(task.owner)}</div>
-      <div class="task-status-row">
-        <span class="badge ${priorityClass}">${task.priority} Priority</span>
-        <span class="badge ${statusClass}">${statusText}</span>
-      </div>
-      <div class="task-actions">
-        <button class="task-btn toggle" onclick="toggleTask('${task.id}')">Toggle Status</button>
-        <button class="task-btn delete" onclick="deleteTask('${task.id}')">Delete</button>
-      </div>
-    `;
-
-    list.appendChild(li);
+  handovers.forEach(item => {
+    list.appendChild(createTaskCard(item, false));
   });
 }
 
-function renderMiniTaskStats() {
-  const tasks = getData(STORAGE_KEYS.tasks);
-  const completed = tasks.filter(t => t.done).length;
-  const outstanding = tasks.filter(t => !t.done).length;
-  const highOutstanding = tasks.filter(t => !t.done && t.priority === "High").length;
+function renderAssignedTasks() {
+  const handovers = getData(STORAGE_KEYS.handovers);
+  const filter = document.getElementById("assigneeFilter").value.trim().toLowerCase();
+  const assignedList = document.getElementById("assignedList");
+  const assignedEmpty = document.getElementById("assignedEmpty");
 
-  document.getElementById("miniCompleted").innerText = completed;
-  document.getElementById("miniOutstanding").innerText = outstanding;
-  document.getElementById("miniHighPriority").innerText = highOutstanding;
+  let filtered = handovers;
+
+  if (filter) {
+    filtered = handovers.filter(item => item.assignedTo.toLowerCase().includes(filter));
+  } else {
+    filtered = [];
+  }
+
+  assignedList.innerHTML = "";
+
+  const outstanding = filtered.filter(item => !item.done).length;
+  const completed = filtered.filter(item => item.done).length;
+
+  document.getElementById("assignedOutstanding").textContent = outstanding;
+  document.getElementById("assignedCompleted").textContent = completed;
+
+  if (filtered.length === 0) {
+    assignedEmpty.classList.remove("hidden");
+    return;
+  }
+
+  assignedEmpty.classList.add("hidden");
+  filtered.forEach(item => {
+    assignedList.appendChild(createTaskCard(item, true));
+  });
+}
+
+function createTaskCard(item, assignedView) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "task-card";
+
+  const priorityClass = item.priority.toLowerCase();
+  const statusClass = item.done ? "done" : "outstanding";
+  const statusText = item.done ? "Done" : "Outstanding";
+
+  wrapper.innerHTML = `
+    <h4>${escapeHtml(item.task)}</h4>
+    <div class="task-meta">
+      Absent person: ${escapeHtml(item.absentPerson)}<br>
+      Assigned to: ${escapeHtml(item.assignedTo)}<br>
+      Due date: ${formatDate(item.dueDate)}
+    </div>
+    <div class="badges">
+      <span class="badge ${priorityClass}">${item.priority} Priority</span>
+      <span class="badge ${statusClass}">${statusText}</span>
+    </div>
+    <div class="task-actions">
+      <button class="task-btn toggle" onclick="toggleHandover('${item.id}')">Toggle Done</button>
+      ${assignedView ? "" : `<button class="task-btn delete" onclick="deleteHandover('${item.id}')">Delete</button>`}
+    </div>
+  `;
+
+  return wrapper;
 }
 
 function refreshDashboard() {
-  const absences = getData(STORAGE_KEYS.absences);
-  const tasks = getData(STORAGE_KEYS.tasks);
+  const { filteredAbsences, filteredHandovers } = getDashboardData();
+  const completed = filteredHandovers.filter(item => item.done);
+  const outstanding = filteredHandovers.filter(item => !item.done);
+  const highOutstanding = outstanding.filter(item => item.priority === "High");
 
-  const completed = tasks.filter(t => t.done);
-  const outstanding = tasks.filter(t => !t.done);
-  const highOutstanding = outstanding.filter(t => t.priority === "High");
+  document.getElementById("statAbsences").textContent = filteredAbsences.length;
+  document.getElementById("statOutstanding").textContent = outstanding.length;
+  document.getElementById("statCompleted").textContent = completed.length;
+  document.getElementById("statHighPriority").textContent = highOutstanding.length;
 
-  document.getElementById("statAbsences").innerText = absences.length;
-  document.getElementById("statOutstanding").innerText = outstanding.length;
-  document.getElementById("statCompleted").innerText = completed.length;
-  document.getElementById("statHighPriority").innerText = highOutstanding.length;
-
-  const riskCards = document.getElementById("riskCards");
-  riskCards.innerHTML = "";
-
-  const risks = [];
-
-  if (absences.length >= 5) {
-    risks.push({
-      type: "danger",
-      title: "High absence level",
-      text: "Absence volume is high and may affect team coverage."
-    });
-  } else if (absences.length >= 3) {
-    risks.push({
-      type: "warning",
-      title: "Moderate absence pressure",
-      text: "Current absence levels may need careful planning."
-    });
-  }
-
-  if (outstanding.length >= 3) {
-    risks.push({
-      type: "warning",
-      title: "Multiple outstanding handover tasks",
-      text: "Several tasks still need follow-up."
-    });
-  }
-
-  if (highOutstanding.length > 0) {
-    risks.push({
-      type: "danger",
-      title: "High-priority work outstanding",
-      text: `${highOutstanding.length} high-priority task(s) remain incomplete.`
-    });
-  }
-
-  if (risks.length === 0) {
-    risks.push({
-      type: "success",
-      title: "No major risks detected",
-      text: "Current absence and handover position looks under control."
-    });
-  }
-
-  risks.forEach(risk => {
-    const card = document.createElement("div");
-    card.className = `risk-card ${risk.type}`;
-    card.innerHTML = `
-      <div class="risk-title">${risk.title}</div>
-      <div class="risk-text">${risk.text}</div>
-    `;
-    riskCards.appendChild(card);
-  });
+  renderRiskList(filteredAbsences, outstanding, highOutstanding);
 }
 
 function generateSummary() {
-  const absences = getData(STORAGE_KEYS.absences);
-  const tasks = getData(STORAGE_KEYS.tasks);
+  const timeframeLabel = getTimeframeLabel();
+  const { filteredAbsences, filteredHandovers } = getDashboardData();
 
-  const completed = tasks.filter(t => t.done);
-  const outstanding = tasks.filter(t => !t.done);
-  const highOutstanding = outstanding.filter(t => t.priority === "High");
+  const completed = filteredHandovers.filter(item => item.done);
+  const outstanding = filteredHandovers.filter(item => !item.done);
+  const highOutstanding = outstanding.filter(item => item.priority === "High");
 
-  let summary = "=== ZCLOPS DAILY SUMMARY ===\n\n";
+  let text = `=== ZCLOPS SUMMARY (${timeframeLabel}) ===\n\n`;
 
-  summary += "Absences:\n";
-  if (absences.length === 0) {
-    summary += "- None\n";
+  text += "Absences:\n";
+  if (filteredAbsences.length === 0) {
+    text += "- None\n";
   } else {
-    absences.forEach(a => {
-      summary += `• ${a.name} (${a.start} → ${a.end})\n`;
+    filteredAbsences.forEach(item => {
+      text += `• ${item.name} (${item.start} → ${item.end})\n`;
     });
   }
 
-  summary += "\nCompleted Tasks:\n";
+  text += "\nCompleted Handover Tasks:\n";
   if (completed.length === 0) {
-    summary += "- None\n";
+    text += "- None\n";
   } else {
-    completed.forEach(t => {
-      summary += `✔ ${t.text} (${t.owner})\n`;
+    completed.forEach(item => {
+      text += `✔ ${item.task} (${item.assignedTo})\n`;
     });
   }
 
-  summary += "\nOutstanding Tasks:\n";
+  text += "\nOutstanding Handover Tasks:\n";
   if (outstanding.length === 0) {
-    summary += "- None\n";
+    text += "- None\n";
   } else {
-    outstanding.forEach(t => {
-      summary += `❌ ${t.text} (${t.owner}) [${t.priority}]\n`;
+    outstanding.forEach(item => {
+      text += `❌ ${item.task} (${item.assignedTo}) [${item.priority}] due ${item.dueDate}\n`;
     });
   }
 
-  summary += "\nRisk Flags:\n";
+  text += "\nRisk Flags:\n";
+  const risks = buildRisks(filteredAbsences, outstanding, highOutstanding);
+  if (risks.length === 0) {
+    text += "- No major risks detected.\n";
+  } else {
+    risks.forEach(risk => {
+      text += `⚠️ ${risk}\n`;
+    });
+  }
+
+  document.getElementById("summaryOutput").textContent = text;
+}
+
+function buildRisks(filteredAbsences, outstanding, highOutstanding) {
   const risks = [];
 
-  if (absences.length >= 5) {
-    risks.push("High absence level may impact team coverage.");
+  if (filteredAbsences.length >= 5) {
+    risks.push("High absence level may impact coverage.");
+  } else if (filteredAbsences.length >= 3) {
+    risks.push("Moderate absence level may need planning attention.");
   }
+
   if (outstanding.length >= 3) {
     risks.push("Multiple outstanding handover tasks need follow-up.");
   }
+
   if (highOutstanding.length > 0) {
     risks.push(`${highOutstanding.length} high-priority task(s) remain incomplete.`);
   }
 
-  if (risks.length === 0) {
-    summary += "- No major risks detected.\n";
-  } else {
-    risks.forEach(risk => {
-      summary += `⚠️ ${risk}\n`;
-    });
+  const overdue = outstanding.filter(item => item.dueDate < todayString());
+  if (overdue.length > 0) {
+    risks.push(`${overdue.length} task(s) are overdue.`);
   }
 
-  document.getElementById("summary").innerText = summary;
+  return risks;
 }
 
-function seedDemoData() {
+function renderRiskList(filteredAbsences, outstanding, highOutstanding) {
+  const riskList = document.getElementById("riskList");
+  riskList.innerHTML = "";
+
+  const risks = buildRisks(filteredAbsences, outstanding, highOutstanding);
+
+  if (risks.length === 0) {
+    riskList.innerHTML = `
+      <div class="risk-card success">
+        <strong>No major risks detected</strong>
+        <p>Current absence and handover position looks manageable.</p>
+      </div>
+    `;
+    return;
+  }
+
+  risks.forEach(risk => {
+    let type = "warning";
+    if (risk.toLowerCase().includes("high") || risk.toLowerCase().includes("overdue")) {
+      type = "danger";
+    }
+
+    const card = document.createElement("div");
+    card.className = `risk-card ${type}`;
+    card.innerHTML = `<strong>${risk}</strong><p>Review coverage, ownership, and follow-up actions.</p>`;
+    riskList.appendChild(card);
+  });
+}
+
+function getDashboardData() {
+  const absences = getData(STORAGE_KEYS.absences);
+  const handovers = getData(STORAGE_KEYS.handovers);
+
+  const timeframeType = document.getElementById("timeframeType").value;
+  const customStart = document.getElementById("customStart").value;
+  const customEnd = document.getElementById("customEnd").value;
+
+  if (timeframeType === "all") {
+    return { filteredAbsences: absences, filteredHandovers: handovers };
+  }
+
+  let start;
+  let end;
+
+  if (timeframeType === "today") {
+    start = todayString();
+    end = todayString();
+  } else if (timeframeType === "7") {
+    start = todayString();
+    end = addDaysString(7);
+  } else if (timeframeType === "21") {
+    start = todayString();
+    end = addDaysString(21);
+  } else if (timeframeType === "custom") {
+    start = customStart;
+    end = customEnd;
+    if (!start || !end) {
+      return { filteredAbsences: [], filteredHandovers: [] };
+    }
+  }
+
+  const filteredAbsences = absences.filter(item => datesOverlap(start, end, item.start, item.end));
+  const filteredHandovers = handovers.filter(item => item.dueDate >= start && item.dueDate <= end);
+
+  return { filteredAbsences, filteredHandovers };
+}
+
+function getTimeframeLabel() {
+  const timeframeType = document.getElementById("timeframeType").value;
+  if (timeframeType === "today") return "Today";
+  if (timeframeType === "7") return "Next 7 Days";
+  if (timeframeType === "21") return "Next 3 Weeks";
+  if (timeframeType === "all") return "All Data";
+  if (timeframeType === "custom") return "Custom Range";
+  return "Selected Range";
+}
+
+function loadDemoData() {
   const absences = [
-    { id: createId(), name: "Amy", start: "2026-04-20", end: "2026-04-22", impact: "Medium likelihood" },
-    { id: createId(), name: "Lexy", start: "2026-04-21", end: "2026-04-25", impact: "Medium likelihood" },
-    { id: createId(), name: "Tasha", start: "2026-04-23", end: "2026-04-24", impact: "High likelihood" }
+    {
+      id: createId(),
+      name: "Amy",
+      start: addDaysString(1),
+      end: addDaysString(3),
+      likelihood: "Medium chance",
+      status: "Pending"
+    },
+    {
+      id: createId(),
+      name: "Lexy",
+      start: addDaysString(2),
+      end: addDaysString(6),
+      likelihood: "Medium chance",
+      status: "Pending"
+    },
+    {
+      id: createId(),
+      name: "Tasha",
+      start: addDaysString(7),
+      end: addDaysString(8),
+      likelihood: "High chance",
+      status: "Pending"
+    }
   ];
 
-  const tasks = [
-    { id: createId(), absentPerson: "Amy", text: "Follow up on complaint case", owner: "Jamie", priority: "High", done: false, createdAt: new Date().toISOString() },
-    { id: createId(), absentPerson: "Lexy", text: "Check charger install update", owner: "Chris", priority: "Medium", done: true, createdAt: new Date().toISOString() },
-    { id: createId(), absentPerson: "Tasha", text: "Send customer callback email", owner: "Emma", priority: "Low", done: false, createdAt: new Date().toISOString() }
+  const handovers = [
+    {
+      id: createId(),
+      absentPerson: "Amy",
+      task: "Follow up on complaint case",
+      assignedTo: "Jamie",
+      priority: "High",
+      dueDate: addDaysString(2),
+      done: false
+    },
+    {
+      id: createId(),
+      absentPerson: "Lexy",
+      task: "Check charger install update",
+      assignedTo: "Chris",
+      priority: "Medium",
+      dueDate: addDaysString(4),
+      done: true
+    },
+    {
+      id: createId(),
+      absentPerson: "Tasha",
+      task: "Send customer callback email",
+      assignedTo: "Emma",
+      priority: "Low",
+      dueDate: addDaysString(8),
+      done: false
+    }
   ];
 
   setData(STORAGE_KEYS.absences, absences);
-  setData(STORAGE_KEYS.tasks, tasks);
+  setData(STORAGE_KEYS.handovers, handovers);
+  setAbsenceOutcome("Demo data loaded successfully.", "success");
   renderAll();
   generateSummary();
-  setLeaveResult("Demo data loaded successfully.", "success");
 }
 
-function clearAllData() {
-  const confirmed = confirm("Clear all leave requests and handover tasks?");
+function clearData() {
+  const confirmed = confirm("Clear all absence requests and handover tasks?");
   if (!confirmed) return;
 
   localStorage.removeItem(STORAGE_KEYS.absences);
-  localStorage.removeItem(STORAGE_KEYS.tasks);
+  localStorage.removeItem(STORAGE_KEYS.handovers);
 
-  document.getElementById("summary").innerText = "No summary generated yet.";
-  setLeaveResult("No request checked yet.", "neutral");
+  setAbsenceOutcome("No request checked yet.", "neutral");
+  document.getElementById("summaryOutput").textContent = "No summary generated yet.";
+  document.getElementById("absenceForm").reset();
+  document.getElementById("handoverForm").reset();
+  document.getElementById("assigneeFilter").value = "";
+
   renderAll();
 }
 
@@ -422,12 +542,18 @@ function datesOverlap(start1, end1, start2, end2) {
   return start1 <= end2 && start2 <= end1;
 }
 
-function formatDate(dateString) {
-  return dateString;
+function todayString() {
+  return new Date().toISOString().split("T")[0];
 }
 
-function createId() {
-  return Math.random().toString(36).slice(2, 10);
+function addDaysString(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split("T")[0];
+}
+
+function formatDate(value) {
+  return value;
 }
 
 function escapeHtml(str) {
