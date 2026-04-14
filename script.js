@@ -1,4 +1,4 @@
-// SECTION SWITCHING
+// ---------- SECTION SWITCH ----------
 function showSection(section) {
     document.getElementById("leave").classList.add("hidden");
     document.getElementById("handover").classList.add("hidden");
@@ -7,59 +7,75 @@ function showSection(section) {
     document.getElementById(section).classList.remove("hidden");
 }
 
-// FAKE DATA (simulating people already off)
-let existingAbsences = 3;
+// ---------- STORAGE ----------
+function getData(key) {
+    return JSON.parse(localStorage.getItem(key)) || [];
+}
 
-// LEAVE REQUEST LOGIC
+function setData(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+}
+
+// ---------- LEAVE ----------
 function submitLeave() {
     const name = document.getElementById("name").value;
     const start = document.getElementById("startDate").value;
     const end = document.getElementById("endDate").value;
 
-    let message = "";
-
     if (!name || !start || !end) {
-        message = "Please fill in all fields.";
-    } else if (existingAbsences >= 4) {
-        message = "⚠️ Low likelihood of approval — too many people already off. Consider another date.";
-    } else if (existingAbsences >= 2) {
-        message = "⚠️ Medium likelihood — several people already off. Approval may depend on coverage.";
+        document.getElementById("leaveResult").innerText = "Please fill in all fields.";
+        return;
+    }
+
+    let absences = getData("absences");
+
+    absences.push({ name, start, end });
+    setData("absences", absences);
+
+    // Calculate how many off same period
+    let count = absences.length;
+
+    let message = "";
+    if (count >= 5) {
+        message = "⚠️ Low likelihood — too many people already off.";
+    } else if (count >= 3) {
+        message = "⚠️ Medium likelihood — limited capacity.";
     } else {
-        message = "✅ High likelihood — low absence levels.";
+        message = "✅ High likelihood — good coverage.";
     }
 
     document.getElementById("leaveResult").innerText = message;
 }
 
-// HANDOVER TASKS
-let tasks = [];
-
+// ---------- TASKS ----------
 function addTask() {
-    const taskInput = document.getElementById("task").value;
+    const text = document.getElementById("task").value;
     const owner = document.getElementById("owner").value;
     const priority = document.getElementById("priority").value;
 
-    if (!taskInput || !owner) {
-        alert("Please fill in task and owner.");
+    if (!text || !owner) {
+        alert("Fill in all fields");
         return;
     }
 
-    const task = {
-        text: taskInput,
-        owner: owner,
-        priority: priority,
-        done: false
-    };
+    let tasks = getData("tasks");
 
-    tasks.push(task);
+    tasks.push({
+        text,
+        owner,
+        priority,
+        done: false,
+        date: new Date().toISOString()
+    });
+
+    setData("tasks", tasks);
     renderTasks();
-
-    document.getElementById("task").value = "";
-    document.getElementById("owner").value = "";
 }
 
 function toggleTask(index) {
+    let tasks = getData("tasks");
     tasks[index].done = !tasks[index].done;
+    setData("tasks", tasks);
     renderTasks();
 }
 
@@ -67,32 +83,43 @@ function renderTasks() {
     const list = document.getElementById("taskList");
     list.innerHTML = "";
 
-    tasks.forEach((task, index) => {
+    let tasks = getData("tasks");
+
+    tasks.forEach((task, i) => {
         const li = document.createElement("li");
 
         li.innerHTML = `
             <strong>${task.text}</strong><br>
-            Owner: ${task.owner} | Priority: ${task.priority}<br>
+            Owner: ${task.owner}<br>
+            Priority: ${task.priority}<br>
             Status: ${task.done ? "✅ Done" : "❌ Outstanding"}<br>
-            <button onclick="toggleTask(${index})">Toggle</button>
+            <button onclick="toggleTask(${i})">Toggle</button>
         `;
 
         list.appendChild(li);
     });
 }
 
-// DASHBOARD SUMMARY
+// ---------- DASHBOARD ----------
 function generateSummary() {
-    let summary = "";
+    let absences = getData("absences");
+    let tasks = getData("tasks");
 
-    summary += "=== DAILY SUMMARY ===\n\n";
+    let summary = "=== DAILY SUMMARY ===\n\n";
 
-    summary += "Absences Today: " + existingAbsences + "\n\n";
+    summary += "Absences:\n";
+    if (absences.length === 0) {
+        summary += "- None\n";
+    } else {
+        absences.forEach(a => {
+            summary += `• ${a.name} (${a.start} → ${a.end})\n`;
+        });
+    }
 
     const completed = tasks.filter(t => t.done);
     const outstanding = tasks.filter(t => !t.done);
 
-    summary += "Completed Tasks:\n";
+    summary += "\nCompleted Tasks:\n";
     if (completed.length === 0) {
         summary += "- None\n";
     } else {
@@ -110,10 +137,17 @@ function generateSummary() {
         });
     }
 
-    // SIMPLE RISK FLAG
-    if (outstanding.length > 2) {
-        summary += "\n⚠️ Risk: Multiple outstanding tasks — follow up required.";
+    // RISK LOGIC
+    if (outstanding.length >= 3) {
+        summary += "\n⚠️ RISK: Multiple outstanding tasks";
+    }
+
+    if (absences.length >= 5) {
+        summary += "\n⚠️ RISK: High absence level";
     }
 
     document.getElementById("summary").innerText = summary;
 }
+
+// ---------- LOAD ----------
+renderTasks();
