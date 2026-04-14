@@ -7,310 +7,372 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app">
-    <header class="top-header">
-      <div>
-        <p class="eyebrow">Operations tool</p>
-        <h1>ZCLOPS Absence and Handover Dashboard</h1>
-        <p class="subtitle">
-          Plan absence, submit handovers, and review leadership summaries in one place.
-        </p>
-      </div>
-      <div class="header-actions">
-        <button id="loadDemoBtn" class="btn btn-secondary">Load Demo Data</button>
-        <button id="clearDataBtn" class="btn btn-ghost-danger">Clear Data</button>
-      </div>
-    </header>
-
-    <nav class="tabs">
-      <button class="tab active" data-page="absence">Absence</button>
-      <button class="tab" data-page="handover">Handovers</button>
-      <button class="tab" data-page="dashboard">Dashboard</button>
-    </nav>
-
-    <!-- ABSENCE PAGE -->
-    <section id="absence" class="page active">
-      <div class="hero">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="brand-mark">Z</div>
         <div>
-          <p class="eyebrow">Absence request</p>
-          <h2>Check availability before manager review</h2>
-          <p class="hero-copy">
-            Submit a leave request and instantly see the likely impact based on overlapping absences.
-          </p>
-        </div>
-        <div class="hero-badge">Coverage planning</div>
-      </div>
-
-      <div class="grid two">
-        <div class="card">
-          <div class="card-header">
-            <h3>Apply for Absence</h3>
-          </div>
-
-          <form id="absenceForm" class="form-stack">
-            <div>
-              <label for="absenceName">Name</label>
-              <input type="text" id="absenceName" placeholder="Enter employee name" />
-            </div>
-
-            <div>
-              <label for="absenceStart">Start Date</label>
-              <input type="date" id="absenceStart" />
-            </div>
-
-            <div>
-              <label for="absenceEnd">End Date</label>
-              <input type="date" id="absenceEnd" />
-            </div>
-
-            <button type="submit" class="btn btn-primary">Check & Save Request</button>
-          </form>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3>Availability Outcome</h3>
-          </div>
-
-          <div id="absenceOutcome" class="outcome neutral">
-            No request checked yet.
-          </div>
-
-          <div class="info-list">
-            <div class="info-row">
-              <span>What this does</span>
-              <strong>Shows likely approval pressure</strong>
-            </div>
-            <div class="info-row">
-              <span>Best use</span>
-              <strong>Support manager decision-making</strong>
-            </div>
-            <div class="info-row">
-              <span>Capacity planning</span>
-              <strong>Better view for scrum and coverage</strong>
-            </div>
-          </div>
+          <div class="brand-title">ZCLOPS</div>
+          <div class="brand-subtitle">Absence and Handover Dashboard</div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <h3>Saved Absence Requests</h3>
-          <span id="absenceCount" class="pill">0 requests</span>
-        </div>
+      <nav class="side-nav">
+        <button class="nav-item active" data-page="absence">
+          <span class="nav-label">Absence</span>
+        </button>
+        <button class="nav-item" data-page="handover">
+          <span class="nav-label">Handovers</span>
+        </button>
+        <button class="nav-item" data-page="dashboard">
+          <span class="nav-label">Dashboard</span>
+        </button>
+      </nav>
+    </aside>
 
-        <div id="absenceEmpty" class="empty-state">No absence requests saved yet.</div>
-
-        <div class="table-wrap">
-          <table id="absenceTable" class="data-table hidden">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Likelihood</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="absenceTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- HANDOVER PAGE -->
-    <section id="handover" class="page">
-      <div class="hero">
+    <main class="main">
+      <header class="page-header">
         <div>
-          <p class="eyebrow">Handover management</p>
-          <h2>Submit handovers and track assigned work</h2>
-          <p class="hero-copy">
-            Create structured handovers, assign work clearly, and let owners update completion.
-          </p>
+          <p class="eyebrow">Operations</p>
+          <h1 id="pageTitle">Absence</h1>
+          <p class="page-subtitle">Request leave, manage handovers, and review leadership visibility.</p>
         </div>
-        <div class="hero-badge">Clear ownership</div>
-      </div>
+      </header>
 
-      <div class="grid two">
-        <div class="card">
-          <div class="card-header">
-            <h3>Submit Handover</h3>
+      <!-- ABSENCE -->
+      <section id="absence" class="page active">
+        <div class="hero-card">
+          <div>
+            <p class="eyebrow">Absence request</p>
+            <h2>Check availability before submitting a request</h2>
+            <p class="hero-text">
+              Review the likely approval position based on overlapping absences, then submit the request for leader review.
+            </p>
           </div>
+          <div class="hero-chip">Capacity planning</div>
+        </div>
 
-          <form id="handoverForm" class="form-stack">
-            <div>
-              <label for="absentPerson">Absent Person</label>
-              <input type="text" id="absentPerson" placeholder="Who is off?" />
+        <div class="grid two">
+          <div class="card">
+            <div class="card-header">
+              <h3>Apply for Absence</h3>
             </div>
 
-            <div>
-              <label for="handoverTask">Task</label>
-              <input type="text" id="handoverTask" placeholder="Enter task description" />
-            </div>
-
-            <div>
-              <label for="assignedTo">Assigned To</label>
-              <input type="text" id="assignedTo" placeholder="Who owns this task?" />
-            </div>
-
-            <div class="grid two compact">
+            <form id="absenceForm" class="form-stack">
               <div>
-                <label for="handoverPriority">Priority</label>
-                <select id="handoverPriority">
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
+                <label for="absenceName">Name</label>
+                <input type="text" id="absenceName" placeholder="Enter employee name" />
               </div>
 
               <div>
-                <label for="handoverDue">Due Date</label>
-                <input type="date" id="handoverDue" />
+                <label for="absenceStart">Start Date</label>
+                <input type="date" id="absenceStart" />
+              </div>
+
+              <div>
+                <label for="absenceEnd">End Date</label>
+                <input type="date" id="absenceEnd" />
+              </div>
+
+              <div class="button-row">
+                <button type="button" id="checkAvailabilityBtn" class="btn btn-secondary">Check Availability</button>
+                <button type="submit" class="btn btn-primary">Request Leave</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Availability Result</h3>
+            </div>
+
+            <div id="absenceOutcome" class="outcome neutral">
+              Check a date range to see the likely approval position.
+            </div>
+
+            <div class="info-list">
+              <div class="info-row">
+                <span>Low pressure</span>
+                <strong>High chance of approval</strong>
+              </div>
+              <div class="info-row">
+                <span>Medium pressure</span>
+                <strong>You can still request</strong>
+              </div>
+              <div class="info-row">
+                <span>High pressure</span>
+                <strong>Very low chance, check other dates</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="card">
+            <div class="card-header">
+              <h3>Absence Requests</h3>
+              <span id="absenceCount" class="pill">0 requests</span>
+            </div>
+
+            <div id="absenceEmpty" class="empty-state">No absence requests submitted yet.</div>
+
+            <div class="table-wrap">
+              <table id="absenceTable" class="data-table hidden">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Availability</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="absenceTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Leader Review Queue</h3>
+              <span id="leaderQueueCount" class="pill pill-dark">0 pending</span>
+            </div>
+
+            <div id="leaderEmpty" class="empty-state">No pending requests for review.</div>
+
+            <div class="table-wrap">
+              <table id="leaderTable" class="data-table hidden">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Dates</th>
+                    <th>Availability</th>
+                    <th>Decision</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HANDOVER -->
+      <section id="handover" class="page">
+        <div class="hero-card">
+          <div>
+            <p class="eyebrow">Handover management</p>
+            <h2>Assign work clearly and track completion</h2>
+            <p class="hero-text">
+              Submit handover tasks for absent colleagues and let assignees update progress in one place.
+            </p>
+          </div>
+          <div class="hero-chip">Ownership</div>
+        </div>
+
+        <div class="grid two">
+          <div class="card">
+            <div class="card-header">
+              <h3>Submit Handover</h3>
+            </div>
+
+            <form id="handoverForm" class="form-stack">
+              <div>
+                <label for="absentPerson">Absent Person</label>
+                <input type="text" id="absentPerson" placeholder="Who is off?" />
+              </div>
+
+              <div>
+                <label for="handoverTask">Task</label>
+                <input type="text" id="handoverTask" placeholder="Enter task description" />
+              </div>
+
+              <div>
+                <label for="assignedTo">Assigned To</label>
+                <input type="text" id="assignedTo" placeholder="Who owns this task?" />
+              </div>
+
+              <div class="grid two compact">
+                <div>
+                  <label for="handoverPriority">Priority</label>
+                  <select id="handoverPriority">
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="handoverDue">Due Date</label>
+                  <input type="date" id="handoverDue" />
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary">Add Handover Task</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Tasks Assigned To You</h3>
+            </div>
+
+            <div class="form-stack">
+              <div>
+                <label for="assigneeFilter">Search Your Name</label>
+                <input type="text" id="assigneeFilter" placeholder="Type a name to filter assigned tasks" />
+              </div>
+              <button id="clearAssigneeFilter" type="button" class="btn btn-secondary">Clear Filter</button>
+            </div>
+
+            <div class="mini-stats">
+              <div class="mini-stat">
+                <span>Outstanding</span>
+                <strong id="assignedOutstanding">0</strong>
+              </div>
+              <div class="mini-stat">
+                <span>Completed</span>
+                <strong id="assignedCompleted">0</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="card">
+            <div class="card-header">
+              <h3>All Handover Tasks</h3>
+              <span id="handoverCount" class="pill">0 tasks</span>
+            </div>
+            <div id="handoverEmpty" class="empty-state">No handover tasks added yet.</div>
+            <div id="handoverList" class="task-list"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Assigned Task View</h3>
+            </div>
+            <div id="assignedEmpty" class="empty-state">No assigned tasks found. Enter a name above to filter.</div>
+            <div id="assignedList" class="task-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DASHBOARD -->
+      <section id="dashboard" class="page">
+        <div class="hero-card">
+          <div>
+            <p class="eyebrow">Leadership dashboard</p>
+            <h2>Review absence, handover, and risk by timeframe</h2>
+            <p class="hero-text">
+              Generate summaries for today, the next 7 days, the next 3 weeks, or a custom range.
+            </p>
+          </div>
+          <div class="hero-chip">Visibility</div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Timeframe Controls</h3>
+          </div>
+
+          <div class="grid three">
+            <div>
+              <label for="timeframeType">Timeframe</label>
+              <select id="timeframeType">
+                <option value="today">Today</option>
+                <option value="7">Next 7 Days</option>
+                <option value="21">Next 3 Weeks</option>
+                <option value="all">All Data</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="customStart">Custom Start</label>
+              <input type="date" id="customStart" />
+            </div>
+
+            <div>
+              <label for="customEnd">Custom End</label>
+              <input type="date" id="customEnd" />
+            </div>
+          </div>
+
+          <div class="button-row top-gap">
+            <button id="generateSummaryBtn" class="btn btn-primary">Generate Summary</button>
+            <button id="refreshDashboardBtn" class="btn btn-secondary">Refresh Dashboard</button>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span>Absences in Range</span>
+            <strong id="statAbsences">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Outstanding Tasks</span>
+            <strong id="statOutstanding">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Completed Tasks</span>
+            <strong id="statCompleted">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>High Priority Outstanding</span>
+            <strong id="statHighPriority">0</strong>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="card">
+            <div class="card-header">
+              <h3>Overview</h3>
+            </div>
+
+            <div class="chart-stack">
+              <div class="bar-chart">
+                <div class="chart-row">
+                  <span>Absences</span>
+                  <div class="bar-track"><div id="barAbsences" class="bar-fill green"></div></div>
+                  <strong id="barAbsencesValue">0</strong>
+                </div>
+                <div class="chart-row">
+                  <span>Outstanding</span>
+                  <div class="bar-track"><div id="barOutstanding" class="bar-fill amber"></div></div>
+                  <strong id="barOutstandingValue">0</strong>
+                </div>
+                <div class="chart-row">
+                  <span>Completed</span>
+                  <div class="bar-track"><div id="barCompleted" class="bar-fill blue"></div></div>
+                  <strong id="barCompletedValue">0</strong>
+                </div>
+                <div class="chart-row">
+                  <span>High Priority</span>
+                  <div class="bar-track"><div id="barHighPriority" class="bar-fill red"></div></div>
+                  <strong id="barHighPriorityValue">0</strong>
+                </div>
               </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Add Handover Task</button>
-          </form>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3>Tasks Assigned To You</h3>
-          </div>
-
-          <div class="form-stack">
-            <div>
-              <label for="assigneeFilter">Your Name</label>
-              <input type="text" id="assigneeFilter" placeholder="Type a name to filter assigned tasks" />
-            </div>
-            <button id="clearAssigneeFilter" class="btn btn-secondary" type="button">Clear Filter</button>
-          </div>
-
-          <div class="mini-stats">
-            <div class="mini-stat">
-              <span>Outstanding</span>
-              <strong id="assignedOutstanding">0</strong>
-            </div>
-            <div class="mini-stat">
-              <span>Completed</span>
-              <strong id="assignedCompleted">0</strong>
+            <div id="riskList" class="risk-list top-gap">
+              <div class="risk-card neutral">
+                <strong>No risk data yet</strong>
+                <p>Add absence requests and handover tasks to populate the dashboard.</p>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div class="grid two">
-        <div class="card">
-          <div class="card-header">
-            <h3>All Handover Tasks</h3>
-            <span id="handoverCount" class="pill">0 tasks</span>
-          </div>
-
-          <div id="handoverEmpty" class="empty-state">No handover tasks added yet.</div>
-          <div id="handoverList" class="task-list"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3>Assigned Tasks View</h3>
-          </div>
-
-          <div id="assignedEmpty" class="empty-state">
-            No assigned tasks found. Enter a name above to filter.
-          </div>
-          <div id="assignedList" class="task-list"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- DASHBOARD PAGE -->
-    <section id="dashboard" class="page">
-      <div class="hero">
-        <div>
-          <p class="eyebrow">Leadership dashboard</p>
-          <h2>Generate summaries for any timeframe</h2>
-          <p class="hero-copy">
-            Review absences, outstanding handovers, and operational risks across daily, weekly, or custom periods.
-          </p>
-        </div>
-        <div class="hero-badge">Capacity visibility</div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h3>Summary Controls</h3>
-        </div>
-
-        <div class="grid three">
-          <div>
-            <label for="timeframeType">Timeframe</label>
-            <select id="timeframeType">
-              <option value="today">Today</option>
-              <option value="7">Next 7 Days</option>
-              <option value="21">Next 3 Weeks</option>
-              <option value="all">All Data</option>
-              <option value="custom">Custom Range</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="customStart">Custom Start</label>
-            <input type="date" id="customStart" />
-          </div>
-
-          <div>
-            <label for="customEnd">Custom End</label>
-            <input type="date" id="customEnd" />
-          </div>
-        </div>
-
-        <div class="dashboard-actions">
-          <button id="generateSummaryBtn" class="btn btn-primary">Generate Summary</button>
-          <button id="refreshDashboardBtn" class="btn btn-secondary">Refresh Dashboard</button>
-        </div>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span>Absences in Range</span>
-          <strong id="statAbsences">0</strong>
-        </div>
-        <div class="stat-card">
-          <span>Outstanding Tasks</span>
-          <strong id="statOutstanding">0</strong>
-        </div>
-        <div class="stat-card">
-          <span>Completed Tasks</span>
-          <strong id="statCompleted">0</strong>
-        </div>
-        <div class="stat-card">
-          <span>High Priority Outstanding</span>
-          <strong id="statHighPriority">0</strong>
-        </div>
-      </div>
-
-      <div class="grid two">
-        <div class="card">
-          <div class="card-header">
-            <h3>Risk Overview</h3>
-          </div>
-          <div id="riskList" class="risk-list">
-            <div class="risk-card neutral">
-              <strong>No risk data yet</strong>
-              <p>Add absence requests and handover tasks to populate the dashboard.</p>
+          <div class="card">
+            <div class="card-header">
+              <h3>Generated Summary</h3>
             </div>
+            <pre id="summaryOutput" class="summary-box">No summary generated yet.</pre>
           </div>
         </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h3>Generated Summary</h3>
-          </div>
-          <pre id="summaryOutput" class="summary-box">No summary generated yet.</pre>
-        </div>
-      </div>
-    </section>
+      </section>
+    </main>
   </div>
 
   <script src="script.js"></script>
