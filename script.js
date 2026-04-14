@@ -1,153 +1,214 @@
-// ---------- SECTION SWITCH ----------
 function showSection(section) {
-    document.getElementById("leave").classList.add("hidden");
-    document.getElementById("handover").classList.add("hidden");
-    document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("leave").classList.add("hidden");
+  document.getElementById("handover").classList.add("hidden");
+  document.getElementById("dashboard").classList.add("hidden");
 
-    document.getElementById(section).classList.remove("hidden");
+  document.getElementById(section).classList.remove("hidden");
 }
 
-// ---------- STORAGE ----------
 function getData(key) {
-    return JSON.parse(localStorage.getItem(key)) || [];
+  return JSON.parse(localStorage.getItem(key)) || [];
 }
 
 function setData(key, data) {
-    localStorage.setItem(key, JSON.stringify(data));
+  localStorage.setItem(key, JSON.stringify(data));
 }
 
-// ---------- LEAVE ----------
 function submitLeave() {
-    const name = document.getElementById("name").value;
-    const start = document.getElementById("startDate").value;
-    const end = document.getElementById("endDate").value;
+  const name = document.getElementById("name").value.trim();
+  const start = document.getElementById("startDate").value;
+  const end = document.getElementById("endDate").value;
+  const resultBox = document.getElementById("leaveResult");
 
-    if (!name || !start || !end) {
-        document.getElementById("leaveResult").innerText = "Please fill in all fields.";
-        return;
-    }
+  if (!name || !start || !end) {
+    resultBox.innerText = "Please fill in all fields.";
+    resultBox.className = "result-card danger";
+    return;
+  }
 
-    let absences = getData("absences");
+  if (end < start) {
+    resultBox.innerText = "End date cannot be before start date.";
+    resultBox.className = "result-card danger";
+    return;
+  }
 
-    absences.push({ name, start, end });
-    setData("absences", absences);
+  let absences = getData("absences");
 
-    // Calculate how many off same period
-    let count = absences.length;
+  absences.push({ name, start, end });
+  setData("absences", absences);
 
-    let message = "";
-    if (count >= 5) {
-        message = "⚠️ Low likelihood — too many people already off.";
-    } else if (count >= 3) {
-        message = "⚠️ Medium likelihood — limited capacity.";
-    } else {
-        message = "✅ High likelihood — good coverage.";
-    }
+  const overlappingAbsences = absences.filter(a => datesOverlap(start, end, a.start, a.end)).length;
 
-    document.getElementById("leaveResult").innerText = message;
+  let message = "";
+  let resultClass = "result-card";
+
+  if (overlappingAbsences >= 5) {
+    message = "⚠️ Low likelihood — too many people already off for this period.";
+    resultClass += " danger";
+  } else if (overlappingAbsences >= 3) {
+    message = "⚠️ Medium likelihood — limited capacity, may depend on coverage.";
+    resultClass += " warning";
+  } else {
+    message = "✅ High likelihood — good coverage across the selected period.";
+    resultClass += " success";
+  }
+
+  resultBox.innerText = message;
+  resultBox.className = resultClass;
+
+  document.getElementById("name").value = "";
+  document.getElementById("startDate").value = "";
+  document.getElementById("endDate").value = "";
 }
 
-// ---------- TASKS ----------
+function datesOverlap(start1, end1, start2, end2) {
+  return start1 <= end2 && start2 <= end1;
+}
+
 function addTask() {
-    const text = document.getElementById("task").value;
-    const owner = document.getElementById("owner").value;
-    const priority = document.getElementById("priority").value;
+  const text = document.getElementById("task").value.trim();
+  const owner = document.getElementById("owner").value.trim();
+  const priority = document.getElementById("priority").value;
 
-    if (!text || !owner) {
-        alert("Fill in all fields");
-        return;
-    }
+  if (!text || !owner) {
+    alert("Please fill in task and owner.");
+    return;
+  }
 
-    let tasks = getData("tasks");
+  let tasks = getData("tasks");
 
-    tasks.push({
-        text,
-        owner,
-        priority,
-        done: false,
-        date: new Date().toISOString()
-    });
+  tasks.push({
+    text,
+    owner,
+    priority,
+    done: false,
+    createdAt: new Date().toISOString()
+  });
 
-    setData("tasks", tasks);
-    renderTasks();
+  setData("tasks", tasks);
+  renderTasks();
+
+  document.getElementById("task").value = "";
+  document.getElementById("owner").value = "";
+  document.getElementById("priority").value = "Low";
 }
 
 function toggleTask(index) {
-    let tasks = getData("tasks");
-    tasks[index].done = !tasks[index].done;
-    setData("tasks", tasks);
-    renderTasks();
+  let tasks = getData("tasks");
+  tasks[index].done = !tasks[index].done;
+  setData("tasks", tasks);
+  renderTasks();
 }
 
 function renderTasks() {
-    const list = document.getElementById("taskList");
-    list.innerHTML = "";
+  const list = document.getElementById("taskList");
+  if (!list) return;
 
-    let tasks = getData("tasks");
+  list.innerHTML = "";
 
-    tasks.forEach((task, i) => {
-        const li = document.createElement("li");
+  let tasks = getData("tasks");
 
-        li.innerHTML = `
-            <strong>${task.text}</strong><br>
-            Owner: ${task.owner}<br>
-            Priority: ${task.priority}<br>
-            Status: ${task.done ? "✅ Done" : "❌ Outstanding"}<br>
-            <button onclick="toggleTask(${i})">Toggle</button>
-        `;
+  if (tasks.length === 0) {
+    list.innerHTML = `
+      <li>
+        <strong>No handover tasks yet</strong>
+        <div class="task-meta">Add a task to start building the handover view.</div>
+      </li>
+    `;
+    return;
+  }
 
-        list.appendChild(li);
-    });
+  tasks.forEach((task, i) => {
+    const li = document.createElement("li");
+
+    const priorityClass = task.priority.toLowerCase();
+    const statusClass = task.done ? "done" : "outstanding";
+    const statusText = task.done ? "Done" : "Outstanding";
+
+    li.innerHTML = `
+      <strong>${escapeHtml(task.text)}</strong>
+      <div class="task-meta">Owner: ${escapeHtml(task.owner)}</div>
+      <div class="task-status-row">
+        <span class="badge ${priorityClass}">${task.priority} Priority</span>
+        <span class="badge ${statusClass}">${statusText}</span>
+      </div>
+      <button onclick="toggleTask(${i})">Toggle Status</button>
+    `;
+
+    list.appendChild(li);
+  });
 }
 
-// ---------- DASHBOARD ----------
 function generateSummary() {
-    let absences = getData("absences");
-    let tasks = getData("tasks");
+  let absences = getData("absences");
+  let tasks = getData("tasks");
 
-    let summary = "=== DAILY SUMMARY ===\n\n";
+  let summary = "=== DAILY SUMMARY ===\n\n";
 
-    summary += "Absences:\n";
-    if (absences.length === 0) {
-        summary += "- None\n";
-    } else {
-        absences.forEach(a => {
-            summary += `• ${a.name} (${a.start} → ${a.end})\n`;
-        });
-    }
+  summary += "Absences:\n";
+  if (absences.length === 0) {
+    summary += "- None\n";
+  } else {
+    absences.forEach(a => {
+      summary += `• ${a.name} (${a.start} → ${a.end})\n`;
+    });
+  }
 
-    const completed = tasks.filter(t => t.done);
-    const outstanding = tasks.filter(t => !t.done);
+  const completed = tasks.filter(t => t.done);
+  const outstanding = tasks.filter(t => !t.done);
+  const highOutstanding = outstanding.filter(t => t.priority === "High");
 
-    summary += "\nCompleted Tasks:\n";
-    if (completed.length === 0) {
-        summary += "- None\n";
-    } else {
-        completed.forEach(t => {
-            summary += `✔ ${t.text} (${t.owner})\n`;
-        });
-    }
+  summary += "\nCompleted Tasks:\n";
+  if (completed.length === 0) {
+    summary += "- None\n";
+  } else {
+    completed.forEach(t => {
+      summary += `✔ ${t.text} (${t.owner})\n`;
+    });
+  }
 
-    summary += "\nOutstanding Tasks:\n";
-    if (outstanding.length === 0) {
-        summary += "- None\n";
-    } else {
-        outstanding.forEach(t => {
-            summary += `❌ ${t.text} (${t.owner})\n`;
-        });
-    }
+  summary += "\nOutstanding Tasks:\n";
+  if (outstanding.length === 0) {
+    summary += "- None\n";
+  } else {
+    outstanding.forEach(t => {
+      summary += `❌ ${t.text} (${t.owner}) [${t.priority}]\n`;
+    });
+  }
 
-    // RISK LOGIC
-    if (outstanding.length >= 3) {
-        summary += "\n⚠️ RISK: Multiple outstanding tasks";
-    }
+  summary += "\nRisk Flags:\n";
+  let risks = [];
 
-    if (absences.length >= 5) {
-        summary += "\n⚠️ RISK: High absence level";
-    }
+  if (outstanding.length >= 3) {
+    risks.push("Multiple outstanding tasks need follow-up.");
+  }
 
-    document.getElementById("summary").innerText = summary;
+  if (absences.length >= 5) {
+    risks.push("High absence level may impact team coverage.");
+  }
+
+  if (highOutstanding.length > 0) {
+    risks.push(`${highOutstanding.length} high-priority task(s) still outstanding.`);
+  }
+
+  if (risks.length === 0) {
+    summary += "- No major risks detected.\n";
+  } else {
+    risks.forEach(risk => {
+      summary += `⚠️ ${risk}\n`;
+    });
+  }
+
+  document.getElementById("summary").innerText = summary;
 }
 
-// ---------- LOAD ----------
+function escapeHtml(str) {
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 renderTasks();
