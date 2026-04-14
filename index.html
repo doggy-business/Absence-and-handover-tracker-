@@ -7,61 +7,185 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Workforce Intelligence Dashboard</h1>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">O</div>
+        <div>
+          <h1>Workforce Hub</h1>
+          <p>Leave, handovers and risk visibility</p>
+        </div>
+      </div>
 
-  <div class="nav">
-    <button onclick="showSection('leave')">Leave Request</button>
-    <button onclick="showSection('handover')">Handover</button>
-    <button onclick="showSection('dashboard')">Dashboard</button>
-  </div>
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" onclick="setActive(this); showSection('leave')">
+          <span class="nav-icon">📅</span>
+          <span>Leave Request</span>
+        </button>
+        <button class="nav-btn" onclick="setActive(this); showSection('handover')">
+          <span class="nav-icon">📝</span>
+          <span>Handover</span>
+        </button>
+        <button class="nav-btn" onclick="setActive(this); showSection('dashboard')">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </button>
+      </nav>
 
-  <div id="leave" class="section">
-    <h2>Request Leave</h2>
-    <p>Request time off and see availability instantly.</p>
+      <div class="sidebar-footer">
+        <div class="mini-card">
+          <p class="mini-label">Status</p>
+          <p class="mini-value">Prototype Live</p>
+        </div>
+      </div>
+    </aside>
 
-    <label for="name">Name</label>
-    <input type="text" id="name" placeholder="Enter your name" />
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Internal prototype</p>
+          <h2 id="pageTitle">Leave Request</h2>
+        </div>
+        <div class="topbar-badge">OVO-style demo</div>
+      </header>
 
-    <label for="startDate">Start Date</label>
-    <input type="date" id="startDate" />
+      <section id="leave" class="content-section">
+        <div class="hero-card">
+          <div>
+            <p class="eyebrow">Leave planning</p>
+            <h3>Request time off with instant visibility</h3>
+            <p class="hero-text">
+              Capture leave requests and quickly assess coverage before manager review.
+            </p>
+          </div>
+          <div class="hero-pill">Availability check</div>
+        </div>
 
-    <label for="endDate">End Date</label>
-    <input type="date" id="endDate" />
+        <div class="panel-grid">
+          <div class="panel">
+            <h3>Request Leave</h3>
 
-    <button onclick="submitLeave()">Check Availability</button>
+            <label for="name">Name</label>
+            <input type="text" id="name" placeholder="Enter your name" />
 
-    <p id="leaveResult"></p>
-  </div>
+            <label for="startDate">Start Date</label>
+            <input type="date" id="startDate" />
 
-  <div id="handover" class="section hidden">
-    <h2>Handover Tasks</h2>
+            <label for="endDate">End Date</label>
+            <input type="date" id="endDate" />
 
-    <label for="task">Task</label>
-    <input type="text" id="task" placeholder="Enter task" />
+            <button class="primary-btn" onclick="submitLeave()">Check Availability</button>
+          </div>
 
-    <label for="owner">Assign To</label>
-    <input type="text" id="owner" placeholder="Enter owner name" />
+          <div class="panel">
+            <h3>Availability Result</h3>
+            <div id="leaveResult" class="result-card neutral">
+              No request checked yet.
+            </div>
 
-    <label for="priority">Priority</label>
-    <select id="priority">
-      <option>Low</option>
-      <option>Medium</option>
-      <option>High</option>
-    </select>
+            <div class="info-stack">
+              <div class="info-box">
+                <span class="info-label">Fast benefit</span>
+                <span class="info-value">Reduces poor requests</span>
+              </div>
+              <div class="info-box">
+                <span class="info-label">Next step</span>
+                <span class="info-value">Manager review / Workday later</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <button onclick="addTask()">Add Task</button>
+      <section id="handover" class="content-section hidden">
+        <div class="hero-card">
+          <div>
+            <p class="eyebrow">Task ownership</p>
+            <h3>Create structured handovers</h3>
+            <p class="hero-text">
+              Assign tasks clearly so nothing gets lost when someone is off.
+            </p>
+          </div>
+          <div class="hero-pill">Clear accountability</div>
+        </div>
 
-    <ul id="taskList"></ul>
-  </div>
+        <div class="panel-grid">
+          <div class="panel">
+            <h3>Add Handover Task</h3>
 
-  <div id="dashboard" class="section hidden">
-    <h2>Leadership Dashboard</h2>
+            <label for="task">Task</label>
+            <input type="text" id="task" placeholder="Enter task" />
 
-    <button onclick="generateSummary()">Generate Daily Summary</button>
+            <label for="owner">Assign To</label>
+            <input type="text" id="owner" placeholder="Enter owner name" />
 
-    <pre id="summary"></pre>
+            <label for="priority">Priority</label>
+            <select id="priority">
+              <option>Low</option>
+              <option>Medium</option>
+              <option>High</option>
+            </select>
+
+            <button class="primary-btn" onclick="addTask()">Add Task</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Current Tasks</h3>
+              <span class="panel-tag">Live list</span>
+            </div>
+            <ul id="taskList" class="task-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard" class="content-section hidden">
+        <div class="hero-card">
+          <div>
+            <p class="eyebrow">Leadership view</p>
+            <h3>See absence and risk in one place</h3>
+            <p class="hero-text">
+              Generate a quick operational summary of absences, completions and outstanding work.
+            </p>
+          </div>
+          <div class="hero-pill">Daily summary</div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-label">View</span>
+            <span class="stat-value">Today</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Focus</span>
+            <span class="stat-value">Risk & follow-up</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Mode</span>
+            <span class="stat-value">Prototype</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Operational Summary</h3>
+            <button class="primary-btn" onclick="generateSummary()">Generate Daily Summary</button>
+          </div>
+          <pre id="summary" class="summary-box"></pre>
+        </div>
+      </section>
+    </main>
   </div>
 
   <script src="script.js"></script>
+  <script>
+    function setActive(button) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+
+      const label = button.innerText.trim();
+      document.getElementById('pageTitle').innerText = label;
+    }
+  </script>
 </body>
 </html>
